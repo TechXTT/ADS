@@ -49,8 +49,6 @@ struct Pair pop(struct Pair_Stack *stack)
 
 void print_stack(struct Pair_Stack *stack)
 {
-
-    printf("%d \n", stack->size - 1);
     for (int i = 0; i < stack->size; i++)
     {
         printf("%d %d\n", stack->pairs[i].x, stack->pairs[i].y);
@@ -62,7 +60,7 @@ void dfs(int r, int c, int pacman_r, int pacman_c, int food_r, int food_c, char 
     struct Pair_Stack stack = create_stack(r * c);
     struct Pair directions[4] = {{-1, 0}, {0, -1}, {1, 0}, {0, 1}};
     struct Pair_Stack visited = create_stack(r * c);
-    struct Pair *route_pairs = (struct Pair *)malloc(sizeof(struct Pair) * r * c);
+    struct Pair_Stack route = create_stack(r * c);
     struct Pair_Stack answear_routes;
     push(&stack, pacman_r, pacman_c);
     grid[pacman_r][pacman_c] = '=';
@@ -71,11 +69,12 @@ void dfs(int r, int c, int pacman_r, int pacman_c, int food_r, int food_c, char 
         struct Pair_Stack temp = stack;
         struct Pair position = pop(&temp);
         push(&visited, position.x, position.y);
+        push(&route, position.x, position.y);
         if (position.x == food_r && position.y == food_c)
         {
             if (answear_routes.size == 0)
             {
-                answear_routes = visited;
+                answear_routes = route;
                 break;
             }
         }
@@ -94,10 +93,13 @@ void dfs(int r, int c, int pacman_r, int pacman_c, int food_r, int food_c, char 
         }
         if (&stack.top == &position)
         {
+            pop(&route);
             pop(&stack);
         }
     }
-    print_stack(&stack);
+    printf("%d \n", visited.size);
+    print_stack(&visited);
+    printf("%d \n", answear_routes.size);
     print_stack(&answear_routes);
 }
 
