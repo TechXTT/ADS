@@ -16,15 +16,6 @@ struct Pair_Stack
     int capacity;
 };
 
-struct Pair_Stack *create_pair_stack(int capacity)
-{
-    struct Pair_Stack *stack = (struct Pair_Stack *)malloc(sizeof(struct Pair_Stack));
-    stack->capacity = capacity;
-    stack->size = -1;
-    stack->pairs = (struct Pair *)malloc(stack->capacity * sizeof(struct Pair));
-    return stack;
-}
-
 struct Pair_Stack create_stack(int capacity)
 {
     struct Pair_Stack stack;
@@ -53,11 +44,10 @@ void push(struct Pair_Stack *stack, struct Pair pair)
 
 void dfs(int r, int c, int pacman_r, int pacman_c, int food_r, int food_c, char grid[r][c])
 {
-    struct Pair_Stack *stack = create_pair_stack(r * c);
+    struct Pair_Stack stack = create_stack(r * c * 2);
 
-    struct Pair_Stack visited = create_stack(r * c);
-    struct Pair_Stack result = create_stack(r * c);
-    struct Pair_Stack top = create_stack(r * c);
+    struct Pair_Stack visited = create_stack(r * c * 2);
+    struct Pair_Stack result = create_stack(r * c * 2);
 
     struct Pair current = {0, 0};
     struct Pair pacman = {pacman_r, pacman_c};
@@ -65,7 +55,7 @@ void dfs(int r, int c, int pacman_r, int pacman_c, int food_r, int food_c, char 
 
     int *counter = (int *)malloc(sizeof(int) * r * c);
 
-    push(stack, pacman);
+    push(&stack, pacman);
     current = pacman;
     grid[pacman_r][pacman_c] = '=';
 
@@ -74,7 +64,7 @@ void dfs(int r, int c, int pacman_r, int pacman_c, int food_r, int food_c, char 
     while (current.x != food.x || current.y != food.y)
     {
 
-        stack->size--;
+        stack.size--;
         for (int i = 0; i < 4; i++)
         {
             struct Pair next = {current.x + directions[i].x, current.y + directions[i].y};
@@ -84,17 +74,17 @@ void dfs(int r, int c, int pacman_r, int pacman_c, int food_r, int food_c, char 
 
             if (grid[next.x][next.y] == '-' || grid[next.x][next.y] == '.')
             {
-                push(stack, next);
-                counter[stack->size] = result.size + 1;
-                stack->size++;
+                push(&stack, next);
+                counter[stack.size] = result.size + 1;
+                stack.size++;
                 grid[next.x][next.y] = '=';
             }
         }
         push(&visited, current);
         push(&result, current);
         visited.size++;
-        result.size = counter[stack->size - 1];
-        current = stack->pairs[stack->size - 1];
+        result.size = counter[stack.size - 1];
+        current = stack.pairs[stack.size - 1];
     }
     push(&visited, food);
     push(&result, food);
@@ -110,6 +100,7 @@ void dfs(int r, int c, int pacman_r, int pacman_c, int food_r, int food_c, char 
     {
         printf("%d %d\n", result.pairs[i].x, result.pairs[i].y);
     }
+
 }
 
 int main(void)
