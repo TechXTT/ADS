@@ -70,7 +70,8 @@ int *bfs(int n, int m, int edges_rows, int edges_columns, int **edges, int s, in
     result[s - 1] = 0;
     for (int i = 0; i < *result_count; i++)
     {
-        result[i] = -1;
+        if (i != s - 1)
+            result[i] = -1;
     }
 
     int graph[n][n], visited[n];
@@ -92,22 +93,23 @@ int *bfs(int n, int m, int edges_rows, int edges_columns, int **edges, int s, in
     struct queue q;
     q.push = 0;
     q.pop = 0;
-    q.data = (int *)malloc(n * sizeof(int));
-    q.data[q.push++] = s - 1;
+    q.data = (int *)malloc(1000 * sizeof(int));
+    q.data[q.push++] = s;
     visited[s - 1] = 1;
 
     while (q.push > q.pop)
     {
-        int u = q.data[q.pop++];
+        int u = q.data[q.pop];
         for (int i = 0; i < n; i++)
         {
-            if (graph[u][i] == 1 && visited[i] == 0)
+            if (graph[u - 1][i] == 1 && visited[i] == 0)
             {
                 q.data[q.push++] = i + 1;
                 visited[i] = 1;
-                result[i] = result[u] + 6;
+                result[i] = result[u - 1] + 6;
             }
         }
+        q.pop++;
     }
 
     return result;
@@ -152,7 +154,7 @@ int main()
         {
             if (i != s - 1)
             {
-                fprintf(fptr, "%d ", result[i] + i);
+                fprintf(fptr, "%d ", result[i]);
             }
         }
 

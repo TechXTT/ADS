@@ -13,94 +13,103 @@ struct Pair_Stack
 {
     int size;
     struct Pair *pairs;
-    struct Pair top;
     int capacity;
 };
+
+struct Pair_Stack *create_pair_stack(int capacity)
+{
+    struct Pair_Stack *stack = (struct Pair_Stack *)malloc(sizeof(struct Pair_Stack));
+    stack->capacity = capacity;
+    stack->size = -1;
+    stack->pairs = (struct Pair *)malloc(stack->capacity * sizeof(struct Pair));
+    return stack;
+}
 
 struct Pair_Stack create_stack(int capacity)
 {
     struct Pair_Stack stack;
-    stack.size = 0;
-    stack.pairs = (struct Pair *)malloc(sizeof(struct Pair) * capacity);
     stack.capacity = capacity;
-    stack.top.x = 0;
-    stack.top.y = 0;
+    stack.size = 0;
+    stack.pairs = (struct Pair *)malloc(stack.capacity * sizeof(struct Pair));
     return stack;
 }
 
-void push(struct Pair_Stack *stack, int x, int y)
+void push(struct Pair_Stack *stack, struct Pair pair)
 {
-    if (stack->size == stack->capacity)
+    if (stack->size == stack->capacity - 1)
     {
-        stack->capacity *= 2;
-        stack->pairs = (struct Pair *)realloc(stack->pairs, sizeof(struct Pair) * stack->capacity);
+        stack->capacity = stack->size * 2;
+        struct Pair *temp;
+        temp = (struct Pair *)realloc(stack->pairs, (stack->capacity * sizeof(struct Pair)));
+        if (temp == NULL)
+        {
+            printf("Error!\n");
+            exit(1);
+        }
+        stack->pairs = temp;
     }
-    stack->pairs[stack->size].x = x;
-    stack->pairs[stack->size].y = y;
-    stack->size++;
-}
-
-struct Pair pop(struct Pair_Stack *stack)
-{
-    struct Pair position = stack->pairs[stack->size - 1];
-    stack->size--;
-    return position;
-}
-
-void print_stack(struct Pair_Stack *stack)
-{
-    for (int i = 0; i < stack->size; i++)
-    {
-        printf("%d %d\n", stack->pairs[i].x, stack->pairs[i].y);
-    }
+    stack->pairs[stack->size] = pair;
 }
 
 void dfs(int r, int c, int pacman_r, int pacman_c, int food_r, int food_c, char grid[r][c])
 {
-    struct Pair_Stack stack = create_stack(r * c);
-    struct Pair directions[4] = {{-1, 0}, {0, -1}, {1, 0}, {0, 1}};
+    struct Pair_Stack *stack = create_pair_stack(r * c);
+
     struct Pair_Stack visited = create_stack(r * c);
-    struct Pair_Stack route = create_stack(r * c);
-    struct Pair_Stack answear_routes;
-    push(&stack, pacman_r, pacman_c);
+    struct Pair_Stack result = create_stack(r * c);
+    struct Pair_Stack top = create_stack(r * c);
+
+    struct Pair current = {0, 0};
+    struct Pair pacman = {pacman_r, pacman_c};
+    struct Pair food = {food_r, food_c};
+
+    int *counter = (int *)malloc(sizeof(int) * r * c);
+
+    push(stack, pacman);
+    current = pacman;
     grid[pacman_r][pacman_c] = '=';
-    while (stack.size != 0)
+
+    struct Pair directions[4] = {{-1, 0}, {0, -1}, {0, 1}, {1, 0}};
+
+    while (current.x != food.x || current.y != food.y)
     {
-        struct Pair_Stack temp = stack;
-        struct Pair position = pop(&temp);
-        push(&visited, position.x, position.y);
-        push(&route, position.x, position.y);
-        if (position.x == food_r && position.y == food_c)
-        {
-            if (answear_routes.size == 0)
-            {
-                answear_routes = route;
-                break;
-            }
-        }
+
+        stack->size--;
         for (int i = 0; i < 4; i++)
         {
-            int new_x = position.x + directions[i].x;
-            int new_y = position.y + directions[i].y;
-            if (new_x >= 0 && new_x < r && new_y >= 0 && new_y < c && grid[new_x][new_y] != '#')
+            struct Pair next = {current.x + directions[i].x, current.y + directions[i].y};
+
+            if (next.x < 0 || next.x >= r || next.y < 0 || next.y >= c)
+                continue;
+
+            if (grid[next.x][next.y] == '-' || grid[next.x][next.y] == '.')
             {
-                if (grid[new_x][new_y] == '.' || grid[new_x][new_y] == '-')
-                {
-                    push(&stack, new_x, new_y);
-                    grid[new_x][new_y] = '=';
-                }
+                push(stack, next);
+                counter[stack->size] = result.size + 1;
+                stack->size++;
+                grid[next.x][next.y] = '=';
             }
         }
-        if (&stack.top == &position)
-        {
-            pop(&route);
-            pop(&stack);
-        }
+        push(&visited, current);
+        push(&result, current);
+        visited.size++;
+        result.size = counter[stack->size - 1];
+        current = stack->pairs[stack->size - 1];
     }
-    printf("%d \n", visited.size);
-    print_stack(&visited);
-    printf("%d \n", answear_routes.size);
-    print_stack(&answear_routes);
+    push(&visited, food);
+    push(&result, food);
+    visited.size++;
+    result.size++;
+    printf("%d\n", visited.size);
+    for (int i = 0; i < visited.size; i++)
+    {
+        printf("%d %d\n", visited.pairs[i].x, visited.pairs[i].y);
+    }
+    printf("%d\n", result.size - 1);
+    for (int i = 0; i < result.size; i++)
+    {
+        printf("%d %d\n", result.pairs[i].x, result.pairs[i].y);
+    }
 }
 
 int main(void)
@@ -120,6 +129,5 @@ int main(void)
     }
     dfs(r, c, pacman_r, pacman_c, food_r, food_c, grid);
 
-    // printf("Fuck fucking C lANGUAGE!!!!! Marto moje da si ebe majkata!!!\n");
     return 0;
 }
